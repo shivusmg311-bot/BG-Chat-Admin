@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLASTER ADMIN PANEL</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Premium Cyberpunk & Minimalist Themes via CSS Variables */
+    :root {
+      --bg-primary: #f4f3f6;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #eae9ee;
+      --border-color: #e2e0e6;
+      --text-primary: #120f1a;
+      --text-secondary: #5e5a6c;
+      --color-violet: #7c3aed;
+      --color-violet-glow: rgba(124, 58, 237, 0.15);
+      --color-cyan: #0891b2;
+      --color-cyan-glow: rgba(8, 145, 178, 0.15);
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --status-online: #10b981;
+    }
+
+    .dark-theme, [data-theme="dark"] {
+      --bg-primary: #0a0812;
+      --bg-secondary: #120e24;
+      --bg-tertiary: #1b1633;
+      --border-color: #211c3b;
+      --text-primary: #f3f1f6;
+      --text-secondary: #9a95b0;
+      --color-violet: #8b5cf6;
+      --color-violet-glow: rgba(139, 92, 246, 0.3);
+      --color-cyan: #06b6d4;
+      --color-cyan-glow: rgba(6, 182, 212, 0.3);
+      --card-shadow: 0 0 15px rgba(139, 92, 246, 0.12), 0 0 6px rgba(6, 182, 212, 0.08);
+      --status-online: #10b981;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Space Grotesk', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    .glass-panel {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glow-violet {
+      box-shadow: 0 0 15px var(--color-violet-glow);
+    }
+    
+    .glow-cyan {
+      box-shadow: 0 0 15px var(--color-cyan-glow);
+    }
+
+    .glow-text-cyan {
+      text-shadow: 0 0 8px var(--color-cyan);
+    }
+
+    .glow-text-violet {
+      text-shadow: 0 0 8px var(--color-violet);
+    }
+
+    /* Custom elegant scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-violet);
+    }
+
+    /* Terminal-style Spy Chat scroll screen */
+    .terminal-chat {
+      background-color: #05040a;
+      border: 1px solid #1f1a3a;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Pulse active animation */
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--status-online);
+      box-shadow: 0 0 8px var(--status-online);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* Safe Navigation Bar Padding for Android Screens */
+    .bottom-nav-spacer {
+      height: 70px;
+    }
+
+    @media (min-width: 1024px) {
+      .bottom-nav-spacer {
+        height: 0;
+      }
+    }
+  </style>
+
+  <!-- Firebase Compat Core and Firestore SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row antialiased">
+
+  <!-- ================= SIDEBAR (DESKTOP) ================= -->
+  <aside class="hidden lg:flex flex-col w-72 glass-panel border-r shrink-0 min-h-screen">
+    <!-- Brand / Title -->
+    <div class="p-6 border-b border-[var(--border-color)] flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-400 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-wider text-lg uppercase bg-gradient-to-r from-[var(--color-violet)] to-[var(--color-cyan)] bg-clip-text text-transparent">Blaster Admin</h1>
+          <p class="text-xs text-[var(--text-secondary)] font-mono">INTELLIGENCE V9.4</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Timer Panel -->
+    <div class="px-6 py-4 border-b border-[var(--border-color)] bg-opacity-30 bg-[var(--bg-primary)] font-mono text-xs flex justify-between items-center text-[var(--text-secondary)]">
+      <span><i class="fa-regular fa-clock mr-1"></i> UTC TIME</span>
+      <span id="desktop-clock" class="text-[var(--text-primary)] font-bold">19:09:48</span>
+    </div>
+
+    <!-- Navigation Menu Links -->
+    <nav class="flex-1 px-4 py-6 space-y-2">
+      <button onclick="switchTab('dashboard')" id="btn-desktop-dashboard" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-medium transition-all duration-200">
+        <i class="fa-solid fa-chart-line text-lg w-6 text-center"></i>
+        <span>Dashboard Overview</span>
+      </button>
+      <button onclick="switchTab('users')" id="btn-desktop-users" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-medium transition-all duration-200">
+        <i class="fa-solid fa-users text-lg w-6 text-center"></i>
+        <span>User Directory</span>
+      </button>
+      <button onclick="switchTab('notices')" id="btn-desktop-notices" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-medium transition-all duration-200">
+        <i class="fa-solid fa-bullhorn text-lg w-6 text-center"></i>
+        <span>Notice Broadcast</span>
+      </button>
+      <button onclick="switchTab('settings')" id="btn-desktop-settings" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-medium transition-all duration-200">
+        <i class="fa-solid fa-sliders text-lg w-6 text-center"></i>
+        <span>System Directives</span>
+      </button>
+    </nav>
+
+    <!-- Footer Controls (Theme Switcher / Connection Status) -->
+    <div class="p-6 border-t border-[var(--border-color)] space-y-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-[var(--text-secondary)] font-medium">Visual Mode</span>
+        <button onclick="toggleTheme()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:scale-105 active:scale-95 transition-all text-lg">
+          <i id="theme-icon" class="fa-solid fa-moon text-[var(--color-violet)]"></i>
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-opacity-20 bg-[var(--bg-primary)] border border-[var(--border-color)]">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-[var(--text-secondary)]">Environment</span>
+          <span id="env-badge-desktop" class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Demo DB</span>
+        </div>
+        <button onclick="toggleDatabaseMode()" class="w-full text-xs text-center py-2 px-3 rounded-lg font-bold bg-gradient-to-r from-violet-600 to-cyan-500 text-white shadow-md hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate"></i>
+          <span id="db-switch-btn-desktop">Connect Firestore</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= HEADER (MOBILE) ================= -->
+  <header class="lg:hidden flex items-center justify-between px-6 py-4 glass-panel border-b sticky top-0 z-50">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-600 to-cyan-400 flex items-center justify-center shadow-md">
+        <i class="fa-solid fa-shield-halved text-white text-base"></i>
+      </div>
+      <div>
+        <h1 class="font-bold tracking-wider text-sm uppercase">Blaster Admin</h1>
+        <p class="text-[9px] text-[var(--text-secondary)] font-mono">UTC: <span id="mobile-clock">19:09:48</span></p>
+      </div>
+    </div>
+
+    <!-- Quick controls on mobile -->
+    <div class="flex items-center gap-3">
+      <span id="env-badge-mobile" class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Demo</span>
+      <button onclick="toggleTheme()" class="w-8 h-8 rounded-full glass-panel flex items-center justify-center text-sm">
+        <i id="theme-icon-mobile" class="fa-solid fa-moon text-[var(--color-violet)]"></i>
+      </button>
+      <button onclick="toggleDatabaseMode()" class="w-8 h-8 rounded-full glass-panel flex items-center justify-center text-sm" title="Toggle Firestore Link">
+        <i class="fa-solid fa-rotate text-[var(--color-cyan)]"></i>
+      </button>
+    </div>
+  </header>
+
+
+  <!-- ================= MAIN CONTENT SPACE ================= -->
+  <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Toast notification overlay -->
+    <div id="toast" class="fixed top-24 right-6 z-[100] transform translate-y-[-100px] opacity-0 transition-all duration-300 pointer-events-none">
+      <div class="flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg border border-[var(--border-color)] glass-panel glow-violet">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-[var(--color-violet)] text-lg"></i>
+        <p id="toast-msg" class="text-sm font-semibold font-sans">Operational Success.</p>
+      </div>
+    </div>
+
+    <!-- ================= PANEL 1: DASHBOARD OVERVIEW ================= -->
+    <section id="panel-dashboard" class="tab-panel space-y-6">
+      
+      <!-- Top Cyber Banner -->
+      <div class="glass-panel p-6 rounded-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 glow-violet">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-violet-600/5 rounded-full filter blur-3xl pointer-events-none"></div>
+        <div class="space-y-2 relative z-10">
+          <div class="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[var(--color-violet)] uppercase">
+            <span class="pulse-dot"></span> SECURE OPERATION FEED
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Blaster Intelligence Hub</h2>
+          <p class="text-sm text-[var(--text-secondary)]">Real-time surveillance & control over the active chat database node.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 relative z-10">
+          <div class="glass-panel py-2.5 px-4 rounded-xl flex items-center gap-3 bg-opacity-40">
+            <i class="fa-solid fa-wifi text-[var(--color-cyan)] text-base"></i>
+            <div>
+              <p class="text-[10px] text-[var(--text-secondary)] font-mono leading-none">DATABASE STATUS</p>
+              <p id="db-connection-status" class="text-sm font-bold font-mono">Demo mode</p>
+            </div>
+          </div>
+          <button onclick="toggleDatabaseMode()" class="px-4 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] active:scale-95 transition-all flex items-center gap-2 border border-[var(--border-color)]">
+            <i class="fa-solid fa-database"></i>
+            <span id="quick-db-text">Sync Live Firestore</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Metrics Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Metric 1: Total Users -->
+        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+          <div class="space-y-1">
+            <p class="text-xs text-[var(--text-secondary)] font-semibold tracking-wider uppercase">Registered Dossiers</p>
+            <h3 id="stat-total-users" class="text-4xl font-extrabold tracking-tight glow-text-violet">--</h3>
+            <p class="text-xs text-[var(--text-secondary)] font-mono flex items-center gap-1.5 pt-2">
+              <span class="text-green-500 font-bold"><i class="fa-solid fa-arrow-up text-[10px]"></i> +5</span> since last sync
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-xl bg-violet-600/10 flex items-center justify-center border border-violet-500/20">
+            <i class="fa-solid fa-id-card text-[var(--color-violet)] text-2xl"></i>
+          </div>
+        </div>
+
+        <!-- Metric 2: Online Now -->
+        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden transition-all duration-300 hover:scale-[1.02] glow-cyan">
+          <div class="space-y-1">
+            <p class="text-xs text-[var(--text-secondary)] font-semibold tracking-wider uppercase">Active Operators</p>
+            <div class="flex items-center gap-3">
+              <h3 id="stat-online-users" class="text-4xl font-extrabold tracking-tight glow-text-cyan">--</h3>
+              <span class="pulse-dot"></span>
+            </div>
+            <p class="text-xs text-[var(--text-secondary)] font-mono flex items-center gap-1.5 pt-2">
+              <span class="text-[var(--color-cyan)] font-bold">Surveillance online</span>
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-xl bg-cyan-600/10 flex items-center justify-center border border-cyan-500/20">
+            <i class="fa-solid fa-street-view text-[var(--color-cyan)] text-2xl"></i>
+          </div>
+        </div>
+
+        <!-- Metric 3: Total Screen Time -->
+        <div class="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden transition-all duration-300 hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
+          <div class="space-y-1">
+            <p class="text-xs text-[var(--text-secondary)] font-semibold tracking-wider uppercase">Accumulated Engagement</p>
+            <h3 id="stat-screentime" class="text-4xl font-extrabold tracking-tight">-- <span class="text-lg font-medium text-[var(--text-secondary)]">min</span></h3>
+            <p class="text-xs text-[var(--text-secondary)] font-mono flex items-center gap-1.5 pt-2">
+              <span class="text-violet-500 font-bold"><i class="fa-solid fa-chart-simple mr-1"></i> Screen-time logs</span> aggregated
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+            <i class="fa-solid fa-hourglass-half text-amber-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Double Grid: Intercept Event Monitor + System Dashboard -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Quick Action Console -->
+        <div class="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-5">
+          <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+            <h4 class="font-bold text-lg"><i class="fa-solid fa-cubes-stacked text-[var(--color-violet)] mr-2"></i>Operator Activity Index</h4>
+            <span class="text-xs font-mono text-[var(--text-secondary)]">DAILY CHARTS</span>
+          </div>
+          
+          <!-- Synthetic Graph for Screen time trends -->
+          <div class="space-y-4">
+            <p class="text-sm text-[var(--text-secondary)]">Historical user screen-time metrics representing the top chat node traffic distribution:</p>
+            <div id="dashboard-screentime-bars" class="space-y-3.5">
+              <!-- Dynamically populated bars -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Intercept Logs Terminal -->
+        <div class="glass-panel p-6 rounded-2xl flex flex-col h-full min-h-[300px]">
+          <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-4">
+            <h4 class="font-bold text-base font-sans flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-[var(--color-cyan)]"></i>
+              <span>Intercept Console</span>
+            </h4>
+            <button onclick="clearTerminalLogs()" class="text-[10px] uppercase font-bold tracking-widest text-rose-500 hover:underline">Clear</button>
+          </div>
+          <div id="terminal-logs-container" class="flex-1 font-mono text-[11px] p-4 rounded-xl bg-black/40 border border-[var(--border-color)] overflow-y-auto max-h-[250px] space-y-2 text-[var(--text-secondary)]">
+            <!-- Intercept system logs here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= PANEL 2: USER DIRECTORY ================= -->
+    <section id="panel-users" class="tab-panel space-y-6 hidden">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left 5 Columns: Search & Users List -->
+        <div class="glass-panel p-5 rounded-2xl lg:col-span-5 space-y-4">
+          <div class="space-y-1.5">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+              <i class="fa-solid fa-users text-[var(--color-violet)]"></i>
+              <span>Operator Directory</span>
+            </h3>
+            <p class="text-xs text-[var(--text-secondary)] leading-relaxed">Search through active, restricted, or neutral user credentials.</p>
+          </div>
+
+          <!-- Search Form -->
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[var(--text-secondary)]"></i>
+            <input type="text" id="user-search-input" onkeyup="filterUserList()" placeholder="Query username or ID..." class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-violet)] font-sans">
+          </div>
+
+          <!-- User Item Directory List -->
+          <div id="users-directory-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Right 7 Columns: Profile Dossier & Spy Chat View -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Selected Profile Empty state -->
+          <div id="user-profile-empty" class="glass-panel p-12 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
+            <div class="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-2xl border border-[var(--border-color)]">
+              <i class="fa-solid fa-radar text-[var(--text-secondary)] animate-pulse"></i>
+            </div>
+            <div class="space-y-1">
+              <h4 class="font-bold text-base">Awaiting Interception Protocol</h4>
+              <p class="text-xs text-[var(--text-secondary)] max-w-sm">Select any operator displayName from the directory to start active spying, account restrictions, and detail extraction.</p>
+            </div>
+          </div>
+
+          <!-- Selected Profile Workspace -->
+          <div id="user-profile-workspace" class="space-y-6 hidden">
+            
+            <!-- Dossier details card -->
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-l-4 border-[var(--color-violet)]">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-4">
+                  <div id="profile-avatar-placeholder" class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center border border-[var(--border-color)] text-xl font-bold font-mono">
+                    U
+                  </div>
+                  <div class="space-y-0.5">
+                    <h3 id="profile-username" class="font-bold text-lg flex items-center gap-2">username</h3>
+                    <p id="profile-email" class="text-xs text-[var(--text-secondary)] font-mono">user@example.com</p>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <span id="profile-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase bg-green-500/10 text-green-500 border border-green-500/20 flex items-center gap-1.5">
+                    <span class="pulse-dot"></span> Online
+                  </span>
+                  <span id="profile-ban-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase bg-red-500/10 text-red-500 border border-red-500/20 hidden">
+                    Banned
+                  </span>
+                </div>
+              </div>
+
+              <!-- Extra Dossier Metadata Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-5 border-t border-[var(--border-color)]">
+                <div class="space-y-1">
+                  <p class="text-[10px] text-[var(--text-secondary)] uppercase font-mono tracking-wider">CREATION DATE</p>
+                  <p id="profile-created" class="text-xs font-semibold">2026-06-21 14:00</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] text-[var(--text-secondary)] uppercase font-mono tracking-wider">TODAY'S SCREEN TIME</p>
+                  <p id="profile-screentime" class="text-xs font-semibold font-mono text-[var(--color-cyan)]">180 min</p>
+                </div>
+                <div class="space-y-1 col-span-2 sm:col-span-1">
+                  <p class="text-[10px] text-[var(--text-secondary)] uppercase font-mono tracking-wider">RESTRICTION PROTOCOL</p>
+                  <button id="ban-action-button" onclick="promptBanToggle()" class="text-xs font-bold font-mono py-1 px-3 rounded bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-red-500">
+                    BAN ACCOUNT
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECRET SPY CHAT VIEW -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+              <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                  <h4 class="font-bold text-base text-rose-500 font-mono tracking-wider">SECRET SPY CHAT INTERCEPT</h4>
+                </div>
+                <span class="text-[9px] font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase font-bold">Authorized Only</span>
+              </div>
+
+              <p class="text-xs text-[var(--text-secondary)]">Secure transmission feeds capturing personal conversational logs in raw plain text. Absolute stealth: the target receives no warnings or indicators.</p>
+
+              <!-- Spy chat terminal container -->
+              <div class="terminal-chat rounded-xl flex flex-col h-[320px] font-mono">
+                <!-- Chat Screen Header -->
+                <div class="px-4 py-2 bg-black/60 border-b border-[#1f1a3a] flex items-center justify-between text-[10px] text-[#4d437a]">
+                  <span>INTERCEPT LOGS ACTIVE // TARGET: <span id="spy-chat-header-target" class="text-[var(--color-cyan)] font-bold">cybersam</span></span>
+                  <span class="animate-pulse flex items-center gap-1 text-green-500"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> FEED SECURE</span>
+                </div>
+
+                <!-- Scrolling spy chat logs screen -->
+                <div id="spy-chat-screen-logs" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs">
+                  <!-- Generated message feeds -->
+                </div>
+
+                <!-- Chat Screen Footer Controls -->
+                <div class="px-4 py-2.5 bg-black/60 border-t border-[#1f1a3a] flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+                  <span>PACKETS LOADED: <span id="spy-chat-packet-count" class="font-bold text-white">0</span></span>
+                  <button onclick="scrollSpyTerminalToBottom()" class="hover:text-[var(--color-cyan)] font-bold text-[9px] uppercase tracking-wider"><i class="fa-solid fa-arrow-down mr-1"></i> Snap Bottom</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= PANEL 3: NOTICE BOARD ================= -->
+    <section id="panel-notices" class="tab-panel space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Compose Notice -->
+        <div class="glass-panel p-6 rounded-2xl lg:col-span-5 space-y-5">
+          <div class="space-y-1.5">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+              <i class="fa-solid fa-bullhorn text-[var(--color-violet)]"></i>
+              <span>Notice Broadcaster</span>
+            </h3>
+            <p class="text-xs text-[var(--text-secondary)] leading-relaxed">Broadcast warning messages or support alerts to all user app instances in real-time. This writes to the Firestore collection and triggers popups on device.</p>
+          </div>
+
+          <!-- Notice Input Form -->
+          <div class="space-y-4 pt-3">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Broadcast text</label>
+              <textarea id="notice-textarea" rows="5" onkeyup="checkNoticeWordCount()" placeholder="Write announcement text here..." class="w-full p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-violet)] text-sm font-sans placeholder-[var(--text-secondary)]/50 leading-relaxed"></textarea>
+              <div class="flex justify-between items-center text-[10px] font-mono text-[var(--text-secondary)]">
+                <span>Maximum 200 characters recommended</span>
+                <span id="notice-char-counter">0 / 200</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Broadcaster Signature</label>
+              <input type="text" id="notice-author-input" value="Security System" class="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-violet)] text-xs font-mono">
+            </div>
+
+            <button onclick="publishNotice()" id="publish-notice-btn" class="w-full py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-700 hover:to-cyan-600 text-white shadow-md hover:scale-[1.01] active:scale-95 transition-all text-sm flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Publish Broadcast Notice</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Active Notices Logs -->
+        <div class="glass-panel p-6 rounded-2xl lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+            <h4 class="font-bold text-base flex items-center gap-2">
+              <i class="fa-solid fa-clipboard-list text-[var(--color-cyan)]"></i>
+              <span>Live Notices Archive</span>
+            </h4>
+            <span id="active-notices-count" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">0 Active</span>
+          </div>
+
+          <p class="text-xs text-[var(--text-secondary)]">These records are active. Any active notice document inside the database will instantly appear in user navigation panes on load.</p>
+
+          <!-- notices lists -->
+          <div id="notices-archive-list" class="space-y-4 max-h-[450px] overflow-y-auto pr-1">
+            <!-- Dynamic notices go here -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ================= PANEL 4: GLOBAL CONFIG ================= -->
+    <section id="panel-settings" class="tab-panel space-y-6 hidden">
+      <div class="glass-panel p-6 rounded-2xl max-w-4xl mx-auto space-y-6">
+        
+        <div class="space-y-1.5 border-b border-[var(--border-color)] pb-4">
+          <h3 class="font-bold text-xl flex items-center gap-2.5">
+            <i class="fa-solid fa-gears text-[var(--color-violet)]"></i>
+            <span>System Rules & Live Variables</span>
+          </h3>
+          <p class="text-sm text-[var(--text-secondary)]">Modify global core properties, intelligence personas, and support references sync'd across all user app instances in real-time.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Column 1: AI Rules Persona -->
+          <div class="space-y-4 md:col-span-2">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-brain text-[var(--color-violet)] text-sm"></i>
+                <span>App AI Assistant Directives (Core Prompt)</span>
+              </label>
+              <p class="text-[11px] text-[var(--text-secondary)] leading-normal">Defines the behaviors, rules, tone, and intelligence system injected inside the AI chat interface of the user app.</p>
+              <textarea id="settings-ai-rules" rows="6" class="w-full p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-violet)] text-xs font-mono placeholder-[var(--text-secondary)]/50 leading-relaxed"></textarea>
+            </div>
+          </div>
+
+          <!-- Column 2: Developer metadata -->
+          <div class="space-y-4">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-code text-[var(--color-cyan)]"></i>
+                <span>Developer Metadata Manifest</span>
+              </label>
+              <input type="text" id="settings-developer-info" class="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-cyan)] text-xs font-mono">
+            </div>
+          </div>
+
+          <!-- Support links sync -->
+          <div class="space-y-4">
+            <div class="space-y-3">
+              <label class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-headset text-amber-500"></i>
+                <span>Support Hyperlinks Reference</span>
+              </label>
+              
+              <!-- WhatsApp -->
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-500 shrink-0 text-sm">
+                  <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <input type="text" id="settings-whatsapp" placeholder="WhatsApp Number (e.g. +1555...)" class="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs font-sans">
+              </div>
+
+              <!-- Telegram -->
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-sky-500/10 flex items-center justify-center border border-sky-500/20 text-sky-500 shrink-0 text-sm">
+                  <i class="fa-brands fa-telegram"></i>
+                </div>
+                <input type="text" id="settings-telegram" placeholder="Telegram Username/Link" class="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-sky-500 text-xs font-sans">
+              </div>
+
+              <!-- Instagram -->
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-500 shrink-0 text-sm">
+                  <i class="fa-brands fa-instagram"></i>
+                </div>
+                <input type="text" id="settings-instagram" placeholder="Instagram Username" class="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] focus:outline-none focus:ring-1 focus:ring-rose-500 text-xs font-sans">
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div class="pt-4 border-t border-[var(--border-color)] flex justify-end gap-3">
+          <button onclick="resetSettingsFields()" class="px-5 py-2.5 rounded-xl font-bold text-xs bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-all">
+            Reset Fields
+          </button>
+          <button onclick="updateGlobalSettings()" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-700 hover:to-cyan-600 text-white shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Apply Global Config</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BAN CONFIRMATION MODAL -->
+    <div id="ban-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4 hidden">
+      <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-6 glow-violet">
+        <div class="flex items-center gap-3 text-red-500">
+          <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+          <div>
+            <h3 class="font-extrabold text-lg uppercase tracking-wider">CONFIRM OPERATOR BAN</h3>
+            <p class="text-[10px] font-mono">PROTOCOL: RESTRICTION_SET_ACTIVE</p>
+          </div>
+        </div>
+        
+        <p class="text-sm text-[var(--text-secondary)] leading-relaxed">
+          You are about to initiate account ban for user <span id="ban-modal-target-username" class="font-bold text-[var(--text-primary)] font-mono">username</span>. 
+          This blocks access credentials, restricts login, and filters outgoing packets in real-time. Do you authorize this directive?
+        </p>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-[var(--border-color)]">
+          <button onclick="closeBanModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] transition-all">
+            ABORT INTERCEPT
+          </button>
+          <button id="ban-modal-confirm-btn" onclick="executeBanToggle()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-md">
+            AUTHORIZE RESTRICTION
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spacer for Android Navigation gesture keys bar on mobile viewports -->
+    <div class="bottom-nav-spacer"></div>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION BAR (MOBILE) ================= -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass-panel border-t z-50 flex items-center justify-around py-3 px-4">
+    <button onclick="switchTab('dashboard')" id="btn-mobile-dashboard" class="flex flex-col items-center gap-1.5 text-[10px] font-medium transition-all duration-150">
+      <i class="fa-solid fa-chart-line text-lg"></i>
+      <span>Overview</span>
+    </button>
+    <button onclick="switchTab('users')" id="btn-mobile-users" class="flex flex-col items-center gap-1.5 text-[10px] font-medium transition-all duration-150 text-[var(--text-secondary)]">
+      <i class="fa-solid fa-users text-lg"></i>
+      <span>Directory</span>
+    </button>
+    <button onclick="switchTab('notices')" id="btn-mobile-notices" class="flex flex-col items-center gap-1.5 text-[10px] font-medium transition-all duration-150 text-[var(--text-secondary)]">
+      <i class="fa-solid fa-bullhorn text-lg"></i>
+      <span>Broadcast</span>
+    </button>
+    <button onclick="switchTab('settings')" id="btn-mobile-settings" class="flex flex-col items-center gap-1.5 text-[10px] font-medium transition-all duration-150 text-[var(--text-secondary)]">
+      <i class="fa-solid fa-sliders text-lg"></i>
+      <span>Directives</span>
+    </button>
+  </nav>
+
+  <!-- ================= CORE STATE MANAGEMENT & FIREBASE SCRIPT ================= -->
+  <script>
+    // HARDCODED FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNABbiKaekPYLs41iURkFxzBUYUh148bA",
+      authDomain: "bg-chat-app-1fceb.firebaseapp.com",
+      projectId: "bg-chat-app-1fceb",
+      storageBucket: "bg-chat-app-1fceb.firebasestorage.app",
+      messagingSenderId: "54417005030",
+      appId: "1:54417005030:web:372cf5160094b6a8db9e27",
+      measurementId: "G-3PDMKHY9MS"
+    };
+
+    // LOCAL PERSISTENT / REACTIVE SIMULATION DATABASE FOR ROBUSTNESS
+    const defaultState = {
+      isDemo: true, // App starts in Demo mode for immediate interactivity if Firestore rules aren't deployed yet
+      theme: "dark",
+      activeTab: "dashboard",
+      selectedUserId: "user1",
+      users: [
+        { id: "user1", username: "cybersam", email: "sam@krypton.io", createdAt: "2026-06-20 18:45:12", isOnline: true, isBanned: false, screenTime: [120, 95, 140, 180, 150, 200, 240] },
+        { id: "user2", username: "neon_rider", email: "rider@neon.net", createdAt: "2026-06-22 09:12:34", isOnline: true, isBanned: false, screenTime: [45, 80, 55, 120, 90, 110, 85] },
+        { id: "user3", username: "alpha_mod", email: "mod@krypton.io", createdAt: "2026-06-19 12:00:00", isOnline: false, isBanned: false, screenTime: [240, 260, 310, 180, 290, 300, 320] },
+        { id: "user4", username: "luna_chat", email: "luna@space.org", createdAt: "2026-06-24 22:30:15", isOnline: true, isBanned: false, screenTime: [60, 45, 75, 90, 80, 110, 130] },
+        { id: "user5", username: "banned_troll", email: "troll@spambot.com", createdAt: "2026-06-21 02:15:44", isOnline: false, isBanned: true, screenTime: [15, 0, 5, 0, 0, 0, 0] }
+      ],
+      messages: [
+        { id: "m1", senderId: "user1", sender: "cybersam", recipient: "neon_rider", text: "Hey neon, did you see the new notices?", timestamp: "2026-06-25 10:05:12" },
+        { id: "m2", senderId: "user2", sender: "neon_rider", recipient: "cybersam", text: "Yeah! The maintenance warning? Or the support link update?", timestamp: "2026-06-25 10:06:22" },
+        { id: "m3", senderId: "user1", sender: "cybersam", recipient: "neon_rider", text: "Both. It seems the admin is fully sync'd.", timestamp: "2026-06-25 10:07:45" },
+        { id: "m4", senderId: "user3", sender: "alpha_mod", recipient: "luna_chat", text: "Luna, can you review the new AI rules today?", timestamp: "2026-06-25 12:15:00" },
+        { id: "m5", senderId: "user4", sender: "luna_chat", recipient: "alpha_mod", text: "Absolutely, alpha. The model seems much more responsive now.", timestamp: "2026-06-25 12:16:30" },
+        { id: "m6", senderId: "user5", sender: "banned_troll", recipient: "cybersam", text: "SPAM MESSAGE: click here to win free credits!!!", timestamp: "2026-06-25 01:10:00" },
+        { id: "m7", senderId: "user1", sender: "cybersam", recipient: "neon_rider", text: "The admin block rule worked instantly on that bot, thank god.", timestamp: "2026-06-25 14:32:11" }
+      ],
+      notices: [
+        { id: "n1", text: "Blaster Admin System initialized. Connection stable.", timestamp: "2026-06-25 08:00:00", author: "System" },
+        { id: "n2", text: "Attention Chat users: Please verify your security keys under profile.", timestamp: "2026-06-25 15:30:00", author: "Admin" }
+      ],
+      settings: {
+        aiRules: "You are the Blaster Intelligence core. Help users manage their data, compose responses, and guide them with high efficiency. Maintain a friendly but futuristic tech tone.",
+        developerInfo: "Blaster Cybernetic Systems, Dev Division V9",
+        instagram: "blaster_admin",
+        telegram: "blaster_sys",
+        whatsapp: "+15550199"
+      },
+      logs: [
+        "System security scan complete. No threats found.",
+        "Dossier interception protocol standby.",
+        "Ready to listen on chat network streams."
+      ]
+    };
+
+    let appState = {};
+    let db = null;
+    let firebaseInitialized = false;
+    let unsubscribeUsers = null;
+    let unsubscribeMessages = null;
+    let unsubscribeNotices = null;
+    let unsubscribeSettings = null;
+
+    // Load state from localStorage or initialize
+    function initAppState() {
+      const saved = localStorage.getItem("krypton_admin_state");
+      if (saved) {
+        try {
+          appState = JSON.parse(saved);
+        } catch (e) {
+          appState = { ...defaultState };
+        }
+      } else {
+        appState = { ...defaultState };
+      }
+      
+      // Ensure variables exist
+      if (!appState.logs) appState.logs = [...defaultState.logs];
+      if (appState.isDemo === undefined) appState.isDemo = true;
+      
+      saveAppState();
+    }
+
+    function saveAppState() {
+      localStorage.setItem("krypton_admin_state", JSON.stringify(appState));
+    }
+
+    // FIREBASE INITIALIZATION & SYNC
+    function initFirebase() {
+      if (firebaseInitialized) return true;
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseInitialized = true;
+        logConsole("Firebase SDK initialized successfully.");
+        return true;
+      } catch (error) {
+        logConsole("Firebase setup error: " + error.message);
+        console.error("Firebase SDK Init failed", error);
+        return false;
+      }
+    }
+
+    // Toggle between real Firebase and Simulation Environment
+    function toggleDatabaseMode() {
+      if (appState.isDemo) {
+        // Try to connect to real Firebase
+        const success = initFirebase();
+        if (success) {
+          appState.isDemo = false;
+          saveAppState();
+          showToast("Reconnecting to Cloud Firestore Node...", "fa-database");
+          startFirebaseListeners();
+        } else {
+          showToast("Failed to initialize Firebase credentials.", "fa-triangle-exclamation");
+        }
+      } else {
+        // Drop back to local simulator
+        stopFirebaseListeners();
+        appState.isDemo = true;
+        saveAppState();
+        showToast("Switched back to Offline Demo Simulator.", "fa-vial");
+        renderAll();
+      }
+    }
+
+    // Start real-time listeners for Firestore
+    function startFirebaseListeners() {
+      if (!db) return;
+      logConsole("Establishing Firestore real-time intercept listeners...");
+
+      // 1. Users real-time feed
+      unsubscribeUsers = db.collection("users").onSnapshot((snapshot) => {
+        const usersArray = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          usersArray.push({
+            id: doc.id,
+            username: data.username || data.displayName || doc.id,
+            email: data.email || "No email",
+            createdAt: data.createdAt ? formatFirestoreTimestamp(data.createdAt) : "Unknown",
+            isOnline: !!data.isOnline,
+            isBanned: !!data.isBanned || data.status === "banned",
+            screenTime: data.screenTime || [30, 45, 60, 20, 45, 90, 120] // Default screen time logs
+          });
+        });
+        
+        // If empty, suggest initializing
+        if (usersArray.length === 0) {
+          logConsole("Firebase 'users' collection is empty. Showing seed options.");
+        } else {
+          appState.users = usersArray;
+          logConsole(`Intercepted ${usersArray.length} operator credentials.`);
+        }
+        renderStats();
+        renderUserList();
+        renderUserWorkspace();
+      }, (error) => {
+        logConsole(`Firestore Users stream error: ${error.message}`);
+        handleFirebaseError(error);
+      });
+
+      // 2. Chat messages real-time feed
+      unsubscribeMessages = db.collection("messages").orderBy("timestamp", "asc").onSnapshot((snapshot) => {
+        const msgs = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          msgs.push({
+            id: doc.id,
+            senderId: data.senderId || data.sender || "Unknown",
+            sender: data.sender || "Unknown",
+            recipient: data.recipient || data.receiver || data.roomId || "Global",
+            text: data.text || data.message || "",
+            timestamp: data.timestamp ? formatFirestoreTimestamp(data.timestamp) : "Just now"
+          });
+        });
+        appState.messages = msgs;
+        logConsole(`Synced ${msgs.length} secure chat packets.`);
+        renderSpyChat();
+      }, (error) => {
+        logConsole(`Firestore Messages stream error: ${error.message}`);
+      });
+
+      // 3. Notices board real-time feed
+      unsubscribeNotices = db.collection("notices").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+        const nots = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          nots.push({
+            id: doc.id,
+            text: data.text || data.content || "",
+            timestamp: data.timestamp ? formatFirestoreTimestamp(data.timestamp) : "Unknown",
+            author: data.author || "System"
+          });
+        });
+        appState.notices = nots;
+        logConsole(`Synced ${nots.length} bulletin board documents.`);
+        renderNoticesList();
+      }, (error) => {
+        logConsole(`Firestore Notices stream error: ${error.message}`);
+      });
+
+      // 4. Settings doc real-time feed
+      unsubscribeSettings = db.collection("settings").doc("global").onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          appState.settings = {
+            aiRules: data.aiRules || defaultState.settings.aiRules,
+            developerInfo: data.developerInfo || defaultState.settings.developerInfo,
+            instagram: data.instagram || defaultState.settings.instagram,
+            telegram: data.telegram || defaultState.settings.telegram,
+            whatsapp: data.whatsapp || defaultState.settings.whatsapp,
+          };
+          logConsole("Synced global system config variables.");
+          fillSettingsForm();
+        } else {
+          // Initialize remote document if it doesn't exist
+          db.collection("settings").doc("global").set(appState.settings)
+            .then(() => logConsole("Created remote settings blueprint."))
+            .catch(e => console.error("Could not set config blueprint", e));
+        }
+      }, (error) => {
+        logConsole(`Firestore Settings document error: ${error.message}`);
+      });
+    }
+
+    function stopFirebaseListeners() {
+      if (unsubscribeUsers) unsubscribeUsers();
+      if (unsubscribeMessages) unsubscribeMessages();
+      if (unsubscribeNotices) unsubscribeNotices();
+      if (unsubscribeSettings) unsubscribeSettings();
+      logConsole("Real-time cloud streams paused.");
+    }
+
+    function handleFirebaseError(error) {
+      if (error.code === "permission-denied") {
+        logConsole("ALERT: Permissions Blocked! Re-routing to simulation safety.");
+        showToast("Database security rules denied read access. Reverted to Demo DB.", "fa-triangle-exclamation");
+        appState.isDemo = true;
+        saveAppState();
+        renderAll();
+      }
+    }
+
+    function formatFirestoreTimestamp(ts) {
+      if (!ts) return "Just now";
+      // Handle Firebase Timestamp
+      if (ts.seconds) {
+        const date = new Date(ts.seconds * 1000);
+        return date.toISOString().replace('T', ' ').substring(0, 19);
+      }
+      // Handle Date strings or numbers
+      if (typeof ts === 'string') return ts;
+      if (typeof ts === 'number') {
+        return new Date(ts).toISOString().replace('T', ' ').substring(0, 19);
+      }
+      return "Unknown Date";
+    }
+
+    // CONSOLE LOGGER WINDOW
+    function logConsole(message) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const logLine = `[${timeStr}] ${message}`;
+      
+      // Keep state up to date
+      if (!appState.logs) appState.logs = [];
+      appState.logs.unshift(logLine);
+      if (appState.logs.length > 30) appState.logs.pop();
+      saveAppState();
+
+      // Render instantly
+      const container = document.getElementById("terminal-logs-container");
+      if (container) {
+        const lineElem = document.createElement("p");
+        lineElem.className = "hover:text-white transition-all";
+        lineElem.textContent = logLine;
+        container.insertBefore(lineElem, container.firstChild);
+      }
+    }
+
+    function clearTerminalLogs() {
+      appState.logs = [];
+      saveAppState();
+      const container = document.getElementById("terminal-logs-container");
+      if (container) container.innerHTML = "<p class='text-gray-600 font-mono italic'>Console buffer cleared.</p>";
+    }
+
+    // THEME HANDLING (OBSIDIAN DARK VS OFF-WHITE DAY)
+    function applyTheme() {
+      const isDark = appState.theme === "dark";
+      const html = document.documentElement;
+      
+      if (isDark) {
+        html.setAttribute("data-theme", "dark");
+        html.classList.add("dark");
+      } else {
+        html.removeAttribute("data-theme");
+        html.classList.remove("dark");
+      }
+
+      // Update Theme Icons
+      const themeIcon = document.getElementById("theme-icon");
+      const themeIconMobile = document.getElementById("theme-icon-mobile");
+      if (themeIcon) themeIcon.className = isDark ? "fa-solid fa-moon text-violet-400" : "fa-solid fa-sun text-amber-500";
+      if (themeIconMobile) themeIconMobile.className = isDark ? "fa-solid fa-moon text-violet-400" : "fa-solid fa-sun text-amber-500";
+    }
+
+    function toggleTheme() {
+      appState.theme = appState.theme === "dark" ? "light" : "dark";
+      saveAppState();
+      applyTheme();
+      showToast(`Visual Theme: ${appState.theme.toUpperCase()}`, appState.theme === "dark" ? "fa-moon" : "fa-sun");
+    }
+
+    // TAB NAVIGATION
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      saveAppState();
+
+      // Update tab panels view
+      document.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.classList.add("hidden");
+      });
+      const activePanel = document.getElementById(`panel-${tabId}`);
+      if (activePanel) activePanel.classList.remove("hidden");
+
+      // Update Menu Buttons State (Desktop)
+      document.querySelectorAll(".nav-item").forEach(btn => {
+        btn.className = "nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-medium transition-all duration-200 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]";
+      });
+      const activeBtnDesktop = document.getElementById(`btn-desktop-${tabId}`);
+      if (activeBtnDesktop) {
+        activeBtnDesktop.className = "nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left font-bold transition-all duration-200 bg-[var(--bg-tertiary)] text-[var(--color-violet)] border-l-4 border-[var(--color-violet)] glow-violet";
+      }
+
+      // Update Menu Buttons State (Mobile)
+      document.querySelectorAll("nav button").forEach(btn => {
+        if (btn.id.startsWith("btn-mobile-")) {
+          btn.className = "flex flex-col items-center gap-1.5 text-[10px] font-medium transition-all duration-150 text-[var(--text-secondary)]";
+        }
+      });
+      const activeBtnMobile = document.getElementById(`btn-mobile-${tabId}`);
+      if (activeBtnMobile) {
+        activeBtnMobile.className = "flex flex-col items-center gap-1.5 text-[10px] font-bold text-[var(--color-violet)] transition-all duration-150 glow-text-violet";
+      }
+
+      logConsole(`Navigated space workspace to '${tabId.toUpperCase()}' directory.`);
+    }
+
+    // TOAST NOTIFICATIONS
+    function showToast(message, iconName = "fa-circle-info") {
+      const toast = document.getElementById("toast");
+      const toastMsg = document.getElementById("toast-msg");
+      const toastIcon = document.getElementById("toast-icon");
+      
+      toastMsg.textContent = message;
+      toastIcon.className = `fa-solid ${iconName} text-[var(--color-violet)] text-lg`;
+      
+      toast.classList.remove("translate-y-[-100px]", "opacity-0");
+      toast.classList.add("translate-y-0", "opacity-100");
+      
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-[-100px]", "opacity-0");
+      }, 3500);
+    }
+
+    // UTC LIVE CLOCKS
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toISOString().replace('T', ' ').substring(11, 19);
+      document.getElementById("desktop-clock").textContent = timeStr;
+      document.getElementById("mobile-clock").textContent = timeStr;
+    }
+
+    // ================= DYNAMIC DATA RENDERING =================
+
+    // Render Stats
+    function renderStats() {
+      // Registered Users
+      const totalUsers = appState.users.length;
+      document.getElementById("stat-total-users").textContent = totalUsers;
+
+      // Online Users
+      const onlineUsers = appState.users.filter(u => u.isOnline && !u.isBanned).length;
+      document.getElementById("stat-online-users").textContent = onlineUsers;
+
+      // Screen time calculation
+      let totalScreentime = 0;
+      appState.users.forEach(u => {
+        if (u.screenTime && Array.isArray(u.screenTime)) {
+          // Sum up their logs or use recent screenTime index
+          totalScreentime += u.screenTime[u.screenTime.length - 1] || 0;
+        }
+      });
+      document.getElementById("stat-screentime").textContent = totalScreentime;
+
+      // Render Charts inside Dashboard (Activity Index)
+      const graphContainer = document.getElementById("dashboard-screentime-bars");
+      if (graphContainer) {
+        graphContainer.innerHTML = "";
+        
+        // Take top 4 screen time consumers
+        const sorted = [...appState.users].sort((a, b) => {
+          const sA = a.screenTime ? (a.screenTime[a.screenTime.length - 1] || 0) : 0;
+          const sB = b.screenTime ? (b.screenTime[b.screenTime.length - 1] || 0) : 0;
+          return sB - sA;
+        }).slice(0, 4);
+
+        sorted.forEach(user => {
+          const userTime = user.screenTime ? (user.screenTime[user.screenTime.length - 1] || 0) : 0;
+          const maxScale = 360; // scale against a max of 360 mins
+          const pct = Math.min((userTime / maxScale) * 100, 100);
+
+          const barHTML = `
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span class="font-bold flex items-center gap-1.5 font-mono">
+                  <span class="${user.isOnline ? 'pulse-dot' : 'inline-block w-2 h-2 rounded-full bg-gray-500'}"></span>
+                  @${user.username}
+                </span>
+                <span class="font-mono text-[var(--text-secondary)] font-semibold">${userTime} min / day</span>
+              </div>
+              <div class="w-full bg-[var(--bg-tertiary)] rounded-full h-2.5 overflow-hidden border border-[var(--border-color)]">
+                <div class="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 glow-violet" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+          graphContainer.insertAdjacentHTML("beforeend", barHTML);
+        });
+      }
+
+      // Render Connection state texts
+      const isDemo = appState.isDemo;
+      const dbStatusText = document.getElementById("db-connection-status");
+      const envBadgeDesktop = document.getElementById("env-badge-desktop");
+      const envBadgeMobile = document.getElementById("env-badge-mobile");
+      const quickDbText = document.getElementById("quick-db-text");
+      const dbSwitchBtnDesktop = document.getElementById("db-switch-btn-desktop");
+
+      if (isDemo) {
+        dbStatusText.textContent = "DEMO SIMULATOR";
+        dbStatusText.className = "text-sm font-bold text-amber-500 font-mono";
+        envBadgeDesktop.textContent = "Demo Sandbox";
+        envBadgeDesktop.className = "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20";
+        envBadgeMobile.textContent = "Demo";
+        envBadgeMobile.className = "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20";
+        quickDbText.textContent = "Connect Firestore";
+        dbSwitchBtnDesktop.textContent = "Connect Firestore";
+      } else {
+        dbStatusText.textContent = "FIRESTORE ONLINE";
+        dbStatusText.className = "text-sm font-bold text-green-500 font-mono";
+        envBadgeDesktop.textContent = "Cloud Active";
+        envBadgeDesktop.className = "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20";
+        envBadgeMobile.textContent = "Online";
+        envBadgeMobile.className = "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20";
+        quickDbText.textContent = "Disconnect Cloud";
+        dbSwitchBtnDesktop.textContent = "Disconnect Cloud";
+      }
+    }
+
+    // Render User Directory List
+    function renderUserList() {
+      const container = document.getElementById("users-directory-list");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const users = appState.users;
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-xs text-[var(--text-secondary)] italic font-mono">
+            No dossiers indexed.
+          </div>
+        `;
+        return;
+      }
+
+      users.forEach(user => {
+        const isOnline = user.isOnline && !user.isBanned;
+        const isBanned = user.isBanned;
+        
+        let statusBadge = "";
+        if (isBanned) {
+          statusBadge = `<span class="px-1.5 py-0.5 rounded text-[8px] font-bold font-mono bg-red-500/10 text-red-500 border border-red-500/20">BANNED</span>`;
+        } else if (isOnline) {
+          statusBadge = `<span class="px-1.5 py-0.5 rounded text-[8px] font-bold font-mono bg-green-500/10 text-green-500 border border-green-500/20">ONLINE</span>`;
+        } else {
+          statusBadge = `<span class="px-1.5 py-0.5 rounded text-[8px] font-bold font-mono bg-gray-500/10 text-gray-400 border border-gray-500/10">OFFLINE</span>`;
+        }
+
+        const isSelected = appState.selectedUserId === user.id;
+        const selectedClass = isSelected ? "border-[var(--color-violet)] bg-[var(--bg-tertiary)] font-bold glow-violet" : "border-transparent hover:bg-[var(--bg-tertiary)]";
+
+        const userHTML = `
+          <div onclick="selectUser('${user.id}')" class="user-list-item glass-panel p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-200 hover:scale-[1.01] ${selectedClass}" data-username="${user.username.toLowerCase()}">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/10 to-cyan-500/10 flex items-center justify-center font-bold text-xs border border-[var(--border-color)]">
+                ${user.username[0].toUpperCase()}
+              </div>
+              <div class="space-y-0.5">
+                <p class="text-sm font-semibold truncate max-w-[120px]">@${user.username}</p>
+                <p class="text-[10px] text-[var(--text-secondary)] font-mono leading-none truncate max-w-[120px]">${user.email}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${statusBadge}
+              <i class="fa-solid fa-chevron-right text-xs text-[var(--text-secondary)] opacity-50"></i>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML("beforeend", userHTML);
+      });
+    }
+
+    // Filter User list based on Search bar
+    function filterUserList() {
+      const q = document.getElementById("user-search-input").value.toLowerCase();
+      document.querySelectorAll(".user-list-item").forEach(item => {
+        const username = item.getAttribute("data-username");
+        if (username.includes(q)) {
+          item.classList.remove("hidden");
+        } else {
+          item.classList.add("hidden");
+        }
+      });
+    }
+
+    // Select a user
+    function selectUser(userId) {
+      appState.selectedUserId = userId;
+      saveAppState();
+      
+      // Update UI active styling
+      renderUserList();
+      renderUserWorkspace();
+      
+      logConsole(`Initiated tactical surveillance on target node user ID '${userId}'.`);
+    }
+
+    // Render User Details Workspace
+    function renderUserWorkspace() {
+      const selectedId = appState.selectedUserId;
+      const user = appState.users.find(u => u.id === selectedId);
+
+      const emptyView = document.getElementById("user-profile-empty");
+      const workspaceView = document.getElementById("user-profile-workspace");
+
+      if (!user) {
+        emptyView.classList.remove("hidden");
+        workspaceView.classList.add("hidden");
+        return;
+      }
+
+      emptyView.classList.add("hidden");
+      workspaceView.classList.remove("hidden");
+
+      // Set profile details
+      document.getElementById("profile-username").innerHTML = `@${user.username} <span class="text-xs text-[var(--text-secondary)] font-mono">(${user.id})</span>`;
+      document.getElementById("profile-email").textContent = user.email;
+      document.getElementById("profile-created").textContent = user.createdAt;
+      
+      const lastScreenTime = user.screenTime ? (user.screenTime[user.screenTime.length - 1] || 0) : 0;
+      document.getElementById("profile-screentime").textContent = `${lastScreenTime} min`;
+
+      // Set initials avatar
+      document.getElementById("profile-avatar-placeholder").textContent = user.username.substring(0, 2).toUpperCase();
+
+      // Set badges
+      const onlineBadge = document.getElementById("profile-status-badge");
+      const banBadge = document.getElementById("profile-ban-badge");
+      const banBtn = document.getElementById("ban-action-button");
+
+      if (user.isBanned) {
+        onlineBadge.classList.add("hidden");
+        banBadge.classList.remove("hidden");
+        banBtn.textContent = "RESTORE ACCOUNT";
+        banBtn.className = "text-xs font-bold font-mono py-1.5 px-3 rounded bg-green-500/10 border border-green-500/20 hover:bg-green-600 hover:text-white text-green-500 transition-all";
+      } else {
+        banBadge.classList.add("hidden");
+        onlineBadge.classList.remove("hidden");
+        
+        if (user.isOnline) {
+          onlineBadge.innerHTML = `<span class="pulse-dot"></span> Online`;
+          onlineBadge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase bg-green-500/10 text-green-500 border border-green-500/20 flex items-center gap-1.5";
+        } else {
+          onlineBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Offline`;
+          onlineBadge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase bg-gray-500/10 text-gray-400 border border-gray-500/10 flex items-center gap-1.5";
+        }
+        
+        banBtn.textContent = "BAN ACCOUNT";
+        banBtn.className = "text-xs font-bold font-mono py-1.5 px-3 rounded bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-500 transition-all";
+      }
+
+      // Render Spy chats
+      renderSpyChat();
+    }
+
+    // Render Spy Chat logs for selected user
+    function renderSpyChat() {
+      const selectedId = appState.selectedUserId;
+      const user = appState.users.find(u => u.id === selectedId);
+      const chatScreen = document.getElementById("spy-chat-screen-logs");
+      const targetHeader = document.getElementById("spy-chat-header-target");
+      const countHeader = document.getElementById("spy-chat-packet-count");
+
+      if (!user || !chatScreen) return;
+
+      targetHeader.textContent = `@${user.username.toUpperCase()}`;
+
+      // Filter all chats sent by OR received by this user
+      const userChats = appState.messages.filter(m => 
+        m.senderId === user.id || m.sender === user.username || m.recipient === user.username
+      );
+
+      countHeader.textContent = userChats.length;
+      chatScreen.innerHTML = "";
+
+      if (userChats.length === 0) {
+        chatScreen.innerHTML = `
+          <div class="text-center py-12 text-[#4d437a] italic">
+            &lt; NO ACTIVE MESSAGES FOUND FOR NODE &gt;
+          </div>
+        `;
+        return;
+      }
+
+      userChats.forEach(chat => {
+        const isSentByTarget = chat.senderId === user.id || chat.sender === user.username;
+        const colorClass = isSentByTarget ? "text-cyan-400" : "text-violet-400";
+        const tag = isSentByTarget ? "[SENT]" : "[RECV]";
+
+        const messageHTML = `
+          <div class="hover:bg-white/5 p-1 rounded transition-all">
+            <span class="text-gray-600 font-bold">[${chat.timestamp.split(' ')[1] || chat.timestamp}]</span>
+            <span class="${colorClass} font-bold">${tag}</span>
+            <span class="text-white">@${chat.sender}</span>
+            <span class="text-gray-500">to</span>
+            <span class="text-amber-500">@${chat.recipient}:</span>
+            <p class="pl-4 pt-0.5 text-gray-300 select-all border-l border-white/5 ml-2 leading-relaxed">${escapeHTML(chat.text)}</p>
+          </div>
+        `;
+        chatScreen.insertAdjacentHTML("beforeend", messageHTML);
+      });
+
+      scrollSpyTerminalToBottom();
+    }
+
+    function scrollSpyTerminalToBottom() {
+      const chatScreen = document.getElementById("spy-chat-screen-logs");
+      if (chatScreen) {
+        chatScreen.scrollTo({
+          top: chatScreen.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // BAN Directives
+    function promptBanToggle() {
+      const selectedId = appState.selectedUserId;
+      const user = appState.users.find(u => u.id === selectedId);
+      if (!user) return;
+
+      if (user.isBanned) {
+        // Unban immediately without modal
+        unbanUser(user.id);
+      } else {
+        // Show ban modal
+        document.getElementById("ban-modal-target-username").textContent = `@${user.username}`;
+        document.getElementById("ban-confirm-modal").classList.remove("hidden");
+      }
+    }
+
+    function closeBanModal() {
+      document.getElementById("ban-confirm-modal").classList.add("hidden");
+    }
+
+    function executeBanToggle() {
+      const selectedId = appState.selectedUserId;
+      const user = appState.users.find(u => u.id === selectedId);
+      if (!user) return;
+
+      closeBanModal();
+      
+      if (appState.isDemo) {
+        // Local simulation updates
+        user.isBanned = true;
+        user.isOnline = false; // set offline since banned
+        saveAppState();
+        
+        logConsole(`TACTICAL BAN PROTOCOL APPLIED TO @${user.username.toUpperCase()}.`);
+        showToast(`Banned account @${user.username}`, "fa-user-slash");
+        renderAll();
+      } else {
+        // Real Firestore operations
+        db.collection("users").doc(user.id).update({
+          isBanned: true,
+          status: "banned",
+          isOnline: false
+        })
+        .then(() => {
+          logConsole(`TACTICAL BAN CLOUD COMMAND DISPATCHED FOR @${user.username.toUpperCase()}.`);
+          showToast(`Cloud Ban Applied: @${user.username}`, "fa-user-slash");
+        })
+        .catch(error => {
+          logConsole(`Ban write failed: ${error.message}`);
+          showToast("Firestore restriction write rejected.", "fa-triangle-exclamation");
+        });
+      }
+    }
+
+    function unbanUser(userId) {
+      const user = appState.users.find(u => u.id === userId);
+      if (!user) return;
+
+      if (appState.isDemo) {
+        user.isBanned = false;
+        saveAppState();
+        logConsole(`RESTORED ACCESS CREDENTIALS FOR @${user.username.toUpperCase()}.`);
+        showToast(`Restored access for @${user.username}`, "fa-user-shield");
+        renderAll();
+      } else {
+        db.collection("users").doc(userId).update({
+          isBanned: false,
+          status: "active"
+        })
+        .then(() => {
+          logConsole(`RESTORED ACCESS CLOUD COMMAND DISPATCHED FOR @${user.username.toUpperCase()}.`);
+          showToast(`Cloud Access Restored: @${user.username}`, "fa-user-shield");
+        })
+        .catch(error => {
+          logConsole(`Unban write failed: ${error.message}`);
+          showToast("Firestore access restoration rejected.", "fa-triangle-exclamation");
+        });
+      }
+    }
+
+    // ================= NOTICE BOARD WORKSPACE =================
+
+    // Render notices board archive
+    function renderNoticesList() {
+      const container = document.getElementById("notices-archive-list");
+      const activeCounter = document.getElementById("active-notices-count");
+      if (!container) return;
+
+      container.innerHTML = "";
+      const notices = appState.notices;
+
+      activeCounter.textContent = `${notices.length} Active`;
+
+      if (notices.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-xs text-[var(--text-secondary)] italic font-mono border border-dashed border-[var(--border-color)] rounded-2xl">
+            No active broadcast circulars found in index.
+          </div>
+        `;
+        return;
+      }
+
+      notices.forEach(notice => {
+        const noticeHTML = `
+          <div class="glass-panel p-5 rounded-2xl border flex items-start justify-between gap-4 relative overflow-hidden bg-opacity-20">
+            <div class="space-y-2 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold font-mono bg-[var(--color-violet-glow)] text-[var(--color-violet)] border border-violet-500/20 uppercase">
+                  ${notice.author}
+                </span>
+                <span class="text-[10px] text-[var(--text-secondary)] font-mono">${notice.timestamp}</span>
+              </div>
+              <p class="text-sm leading-relaxed">${escapeHTML(notice.text)}</p>
+            </div>
+            <button onclick="deleteNotice('${notice.id}')" class="text-xs font-bold text-rose-500 bg-rose-500/10 hover:bg-rose-500 hover:text-white p-2 rounded-lg transition-all" title="Retract circular">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+        container.insertAdjacentHTML("beforeend", noticeHTML);
+      });
+    }
+
+    function checkNoticeWordCount() {
+      const ta = document.getElementById("notice-textarea");
+      const count = ta.value.length;
+      const counter = document.getElementById("notice-char-counter");
+      counter.textContent = `${count} / 200`;
+      
+      if (count > 200) {
+        counter.className = "text-[10px] font-mono text-red-500 font-bold";
+      } else {
+        counter.className = "text-[10px] font-mono text-[var(--text-secondary)]";
+      }
+    }
+
+    function publishNotice() {
+      const textarea = document.getElementById("notice-textarea");
+      const authorInput = document.getElementById("notice-author-input");
+
+      const text = textarea.value.trim();
+      const author = authorInput.value.trim() || "Security System";
+
+      if (!text) {
+        showToast("Please enter broadcast text before publishing.", "fa-triangle-exclamation");
+        return;
+      }
+
+      const now = new Date();
+      const dateString = now.toISOString().replace('T', ' ').substring(0, 19);
+
+      if (appState.isDemo) {
+        // Save to Local Simulator State
+        const newId = "notice_" + Date.now();
+        const newNotice = {
+          id: newId,
+          text: text,
+          timestamp: dateString,
+          author: author
+        };
+
+        appState.notices.unshift(newNotice);
+        saveAppState();
+
+        logConsole(`BROADCAST CIRCULAR SECURELY WRITTEN // AUTHOR: ${author.toUpperCase()}.`);
+        showToast("Notice broadcast published to Simulator app.", "fa-circle-check");
+        textarea.value = "";
+        checkNoticeWordCount();
+        renderAll();
+      } else {
+        // Publish to real Firestore collection
+        const publishBtn = document.getElementById("publish-notice-btn");
+        publishBtn.disabled = true;
+        publishBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Broadcasting...`;
+
+        db.collection("notices").add({
+          text: text,
+          author: author,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          logConsole(`BROADCAST CIRCULAR SECURELY TRANSMITTED TO CLOUD INSTANCES.`);
+          showToast("Broadcast circular synchronized to active cloud.", "fa-circle-check");
+          textarea.value = "";
+          checkNoticeWordCount();
+        })
+        .catch(error => {
+          logConsole(`Notice upload failed: ${error.message}`);
+          showToast("Firestore notices write rejected.", "fa-triangle-exclamation");
+        })
+        .finally(() => {
+          publishBtn.disabled = false;
+          publishBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Publish Broadcast Notice</span>`;
+        });
+      }
+    }
+
+    function deleteNotice(noticeId) {
+      if (appState.isDemo) {
+        appState.notices = appState.notices.filter(n => n.id !== noticeId);
+        saveAppState();
+        logConsole(`RETRACTED BULLETIN BOARD CIRCULAR '${noticeId}'.`);
+        showToast("Notice retracted from Simulator feed.", "fa-trash-can");
+        renderAll();
+      } else {
+        db.collection("notices").doc(noticeId).delete()
+          .then(() => {
+            logConsole(`RETRACTED BULLETIN CLOUD DOCUMENT '${noticeId}'.`);
+            showToast("Notice document deleted from active Firestore.", "fa-trash-can");
+          })
+          .catch(error => {
+            logConsole(`Notice deletion error: ${error.message}`);
+            showToast("Firestore notice deletion request rejected.", "fa-triangle-exclamation");
+          });
+      }
+    }
+
+
+    // ================= GLOBAL CONFIG SETTINGS WORKSPACE =================
+
+    function fillSettingsForm() {
+      document.getElementById("settings-ai-rules").value = appState.settings.aiRules;
+      document.getElementById("settings-developer-info").value = appState.settings.developerInfo;
+      document.getElementById("settings-whatsapp").value = appState.settings.whatsapp;
+      document.getElementById("settings-telegram").value = appState.settings.telegram;
+      document.getElementById("settings-instagram").value = appState.settings.instagram;
+    }
+
+    function resetSettingsFields() {
+      appState.settings = { ...defaultState.settings };
+      saveAppState();
+      fillSettingsForm();
+      showToast("Config fields reset to systems blue-print.", "fa-rotate-left");
+    }
+
+    function updateGlobalSettings() {
+      const aiRules = document.getElementById("settings-ai-rules").value.trim();
+      const developerInfo = document.getElementById("settings-developer-info").value.trim();
+      const whatsapp = document.getElementById("settings-whatsapp").value.trim();
+      const telegram = document.getElementById("settings-telegram").value.trim();
+      const instagram = document.getElementById("settings-instagram").value.trim();
+
+      const newSettings = { aiRules, developerInfo, whatsapp, telegram, instagram };
+
+      if (appState.isDemo) {
+        appState.settings = newSettings;
+        saveAppState();
+        logConsole("SYSTEM DIRECTIVES LOCALLY UPDATED & PERSISTED.");
+        showToast("Directives applied to Simulator space.", "fa-circle-check");
+        renderAll();
+      } else {
+        // Save directly to Firebase
+        db.collection("settings").doc("global").set(newSettings)
+          .then(() => {
+            logConsole("SYSTEM DIRECTIVES CLOUD SYNCHRONIZATION COMPLETE.");
+            showToast("System configurations applied globally in real-time.", "fa-circle-check");
+          })
+          .catch(error => {
+            logConsole(`Directives write failed: ${error.message}`);
+            showToast("Firestore config write rejected.", "fa-triangle-exclamation");
+          });
+      }
+    }
+
+
+    // ================= BOOTSTRAP INITIALIZATION =================
+
+    function renderAll() {
+      applyTheme();
+      renderStats();
+      renderUserList();
+      renderUserWorkspace();
+      renderNoticesList();
+      fillSettingsForm();
+    }
+
+    window.onload = function() {
+      initAppState();
+      applyTheme();
+      switchTab("dashboard");
+      
+      // Seed Logs Terminal
+      const terminal = document.getElementById("terminal-logs-container");
+      if (terminal && appState.logs) {
+        terminal.innerHTML = "";
+        appState.logs.forEach(log => {
+          const p = document.createElement("p");
+          p.className = "hover:text-white transition-all";
+          p.textContent = log;
+          terminal.appendChild(p);
+        });
+      }
+
+      renderAll();
+
+      // Start Clock timer ticks
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // Check if real Firestore should boot
+      if (!appState.isDemo) {
+        const success = initFirebase();
+        if (success) {
+          startFirebaseListeners();
+        } else {
+          appState.isDemo = true;
+          saveAppState();
+          renderStats();
+        }
+      }
+    };
+  </script>
+</body>
+</html>

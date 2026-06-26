@@ -1,0 +1,6 @@
+{
+  "name": "BLASTER ADMIN",
+  "description": "Premium Cyberpunk Admin Panel to manage users, monitor chats, broadcast alerts, and sync settings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
